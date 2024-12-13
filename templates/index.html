@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube视频下载器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 标题部分 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">YouTube视频下载器</h1>
+            <p class="text-gray-600">输入YouTube视频链接即可下载视频</p>
+        </div>
+
+        <!-- 下载表单 -->
+        <div class="max-w-xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex gap-2">
+                <input type="text" 
+                       id="videoUrl" 
+                       class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" 
+                       placeholder="请输入YouTube视频链接">
+                <button onclick="downloadVideo()" 
+                        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    下载
+                </button>
+            </div>
+            <div id="downloadStatus" class="mt-4 text-center hidden">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                <p class="text-gray-600 mt-2">正在下载中...</p>
+            </div>
+        </div>
+
+        <!-- 视频列表 -->
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">已下载视频</h2>
+            <div class="grid gap-4" id="videoList">
+                {% for video in videos %}
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-xl font-semibold mb-2">{{ video.title }}</h3>
+                    <video controls class="w-full mb-2">
+                        <source src="{{ video.filepath }}" type="video/mp4">
+                    </video>
+                    <div class="text-sm text-gray-600">
+                        <p><span class="font-semibold">时长:</span> {{ video.duration }}秒</p>
+                        <p><span class="font-semibold">作者:</span> {{ video.uploader }}</p>
+                        <p><span class="font-semibold">存储路径:</span> {{ video.filepath }}</p>
+                        <p class="mt-2"><span class="font-semibold">描述:</span> {{ video.description[:200] }}...</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function downloadVideo() {
+            const url = document.getElementById('videoUrl').value;
+            if (!url) {
+                alert('请输入视频链接');
+                return;
+            }
+
+            // 显示下载状态
+            const status = document.getElementById('downloadStatus');
+            status.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // 刷新页面显示新下载的视频
+                    window.location.reload();
+                } else {
+                    alert('下载失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('下载出错: ' + error);
+            } finally {
+                status.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html> 
